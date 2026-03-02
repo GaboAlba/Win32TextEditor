@@ -39,7 +39,7 @@ void DebugRope() {
   string[strcspn(string, "\n")] = 0; 
 
   printf("Creating Rope...\n");
-  Create(rope, NULL, string, 0, strlen(string) - 1);
+  Create(&rope, NULL, string, 0, strlen(string) - 1);
 
   int optionSelected;
   printf("Do you want to do something else?\n");
@@ -48,7 +48,30 @@ void DebugRope() {
   printf("3. Concatenate new string\n");
   printf("4. Search for a specific index\n");
   scanf("%d", &optionSelected);
-  printf("\nYou selected Option %d", optionSelected);
+  printf("\nYou selected Option %d\n", optionSelected);
+
+  switch (optionSelected)
+  {
+    case 1:
+      DebugRope();
+      break;
+    case 2:
+      break;
+    case 3:
+      break;
+    case 4:
+      int index;
+      printf("What index do you want to get? ");
+      scanf("%d", &index);
+      char letter = FindCharacter(rope, index);
+      printf("The letter in index %d is %c\n", index, letter);
+      scanf("%s");
+      break;
+    default:
+      break;
+  }
+
+  Destroy(&rope);
 }
 
 //#endif

@@ -7,7 +7,7 @@
 const int LEAF_LEN = 3;
 
 bool IsLeaf(t_rope* rope) {
-  return rope->leftChild == NULL && rope->righChild == NULL;
+  return rope->leftChild == NULL && rope->rightChild == NULL;
 }
 
 int* GetLeafWeights(t_rope* rope, int* currWeight) {
@@ -15,19 +15,19 @@ int* GetLeafWeights(t_rope* rope, int* currWeight) {
     return currWeight += rope->weight;
   } else {
     GetLeafWeights(rope->leftChild, currWeight);
-    GetLeafWeights(rope->righChild, currWeight);
+    GetLeafWeights(rope->rightChild, currWeight);
   }
 
   return currWeight;
 }
 
-void Create(t_rope* node, t_rope* parent, char* string, int leftPointer, int rightPointer) {
+void Create(t_rope** node, t_rope* parent, char* string, int leftPointer, int rightPointer) {
   // To create a rope we need to build it from the bottom up, starting with the left most leaf
 
-  t_rope* tempNode = (t_rope*)malloc(sizeof(t_rope));
-  tempNode->leftChild = NULL;
-  tempNode->righChild = NULL;
-  tempNode->parent = parent;
+  *node = (t_rope*)malloc(sizeof(t_rope));
+  (*node)->leftChild = NULL;
+  (*node)->rightChild = NULL;
+  (*node)->parent = parent;
 
   // Recursive zone
   int stringSize = rightPointer - leftPointer + 1;
@@ -38,33 +38,28 @@ void Create(t_rope* node, t_rope* parent, char* string, int leftPointer, int rig
   printf("The string size is %d\n", stringSize);
   if (stringSize > LEAF_LEN)
   {
-    tempNode->string = NULL;
-    tempNode->weight = (stringSize - 1) / 2;
-    node = tempNode;
-
+    (*node)->string = NULL;
     
-    printf("The weigth for the node is: %i\n", node->weight);
-    printf("The substring for the node is: %s\n", node->string);
+    printf("The weigth for the node is: %i\n", (*node)->weight);
+    printf("The substring for the node is: %s\n", (*node)->string);
     printf("====================================\n");
-    _sleep(1000);
 
     int middlePointer = leftPointer + stringSize / 2;
-    Create(node->leftChild, node, string, leftPointer, middlePointer);
-    Create(node->righChild, node, string, middlePointer + 1, rightPointer);
+    (*node)->weight = middlePointer - leftPointer + 1;
+    Create(&(*node)->leftChild, *node, string, leftPointer, middlePointer);
+    Create(&(*node)->rightChild, *node, string, middlePointer + 1, rightPointer);
   } else {
-    node = tempNode;
-    node->weight = stringSize;
-    node->string = malloc(sizeof(char[stringSize]) + 1);
+    (*node)->weight = stringSize;
+    (*node)->string = malloc(sizeof(char[stringSize]) + 1);
     int stringIndex = 0;
     for (int i = leftPointer; i <= rightPointer; i++) {
-      node->string[stringIndex++] = string[i];
+      (*node)->string[stringIndex++] = string[i];
     }
-    node->string[stringSize] = '\0';
+    (*node)->string[stringSize] = '\0';
 
-    printf("The weigth for the leaf is: %i\n", node->weight);
-    printf("The substring for the leaf is: %s\n", node->string);
+    printf("The weigth for the leaf is: %i\n", (*node)->weight);
+    printf("The substring for the leaf is: %s\n", (*node)->string);
     printf("====================================\n");
-    _sleep(1000);
 
     return;
   }
@@ -77,7 +72,7 @@ char FindCharacter(t_rope* rope, int index) {
     FindCharacter(rope->leftChild, index);
   } else if (index > rope->weight) {
     index -= rope->weight;
-    FindCharacter(rope->righChild, index);
+    FindCharacter(rope->rightChild, index);
   }
   
   
@@ -91,7 +86,7 @@ char** Split(char* string) {
 void Concatenate(t_rope* resultRope, t_rope* base, t_rope* agg) {
   t_rope* tempRope = (t_rope*)malloc(sizeof(t_rope));
   tempRope->leftChild = base;
-  tempRope->righChild = agg;
+  tempRope->rightChild = agg;
   int initialWeight = 0;
   GetLeafWeights(base, &initialWeight);
   tempRope->weight = initialWeight;
@@ -102,21 +97,27 @@ void Concatenate(t_rope* resultRope, t_rope* base, t_rope* agg) {
 
 /// @brief Recursively free the in-use memory
 /// @param rope 
-void Destroy(t_rope* rope) {
-  if (rope->leftChild == NULL && rope->righChild == NULL && rope->string == NULL) {
-    return;
+void Destroy(t_rope** rope) {
+  if (rope == NULL || *rope == NULL) {
+      return;
   }
   
-  if (rope->leftChild != NULL) {
-    Destroy(rope->leftChild);
-  } else if (rope->righChild != NULL) {
-    Destroy(rope->righChild);
+  if ((*rope)->leftChild != NULL) {
+      Destroy(&((*rope)->leftChild));
   }
-  
-  if (rope->string != NULL) {
-    free(rope->string);
+
+
+  if ((*rope)->rightChild != NULL) {
+      Destroy(&((*rope)->rightChild));
   }
-  free(rope);
+
+  if ((*rope)->string != NULL) {
+    (*rope)->string = NULL;
+    free((*rope)->string);
+  }
+
+  free(*rope);
+  *rope = NULL;
 }
 
 char* PrintRope(t_rope* rope) {
